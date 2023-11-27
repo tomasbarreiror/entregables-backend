@@ -1,7 +1,11 @@
+const fs = require('fs');
+
 class ProductManager {
-    constructor() {
+    constructor(filePath) {
+        this.path = filePath
         this.products = []
         this.newId = 1
+        this.loadProductsFromFile()
     }
 
     addProduct(title, description, price, thumbnail, code, stock) {
@@ -10,16 +14,16 @@ class ProductManager {
         }
 
         if (this.products.some(prod => prod.code === code)) {
-            return console.error("El codigo del producto ya existe")
+            return console.error("El código del producto ya existe.")
         }
 
         const newProduct = {
             id: this.newId++,
             title, description, price, thumbnail, code, stock,
         }
-
         this.products.push(newProduct)
-        console.log("Se agrego", newProduct)
+        console.log("Se agregó:", newProduct)
+        this.saveProductsToFile()
     }
 
     getProducts() {
@@ -29,16 +33,30 @@ class ProductManager {
     getProductById(id) {
         const product = this.products.find(prod => prod.id === id)
 
-        if(product) {
+        if (product) {
             return product
         } else {
-            console.error(`El producto de id ${id} no se encontro`)
+            console.error(`El producto de id ${id} no se encontró.`)
         }
+    }
+
+    loadProductsFromFile() {
+        try {
+            const fileContent = fs.readFileSync(this.path, 'utf-8')
+            this.products = JSON.parse(fileContent)
+            this.newId = Math.max(...this.products.map(product => product.id), 0) + 1
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    saveProductsToFile() {
+        fs.writeFileSync(this.path, JSON.stringify(this.products, null, 2), 'utf-8')
     }
 }
 
 // Ejemplos de uso
-const items = new ProductManager()
+const items = new ProductManager('productos.json')
 
 // Agregar productos exitosamente
 items.addProduct("Teclado", "Razer Hunstman TE - Switches Red", 79.99, "img/teclado_razer.webp", "P01", 30)
@@ -46,7 +64,3 @@ items.addProduct("Mouse", "Razer Viper Mini - Switches Red", 49.99, "img/mouse_r
 
 // Error al agregar un producto
 items.addProduct("Auriculares", "", 29.99, "img/auriculares_logitech.webp", "P03", 39)
-
-// Ver productos
-console.log(items.getProducts()) // Muestra todos los productos
-console.log(items.getProductById(1)) // Muestra un producto por el id (en este caso el 1)
